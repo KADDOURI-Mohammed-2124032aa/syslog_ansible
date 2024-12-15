@@ -1,0 +1,107 @@
+---
+- name: Installation de UFW (si pas déjà installé)
+  apt:
+    name: ufw
+    state: present
+
+- name: Autoriser le trafic entrant pour Rsyslog sur le port 6514 (TCP)
+  ufw:
+    rule: allow
+    port: 6514
+    proto: tcp
+
+- name: Autoriser SSH (port 22)
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+
+- name: Activation du pare-feu UFW
+  ufw:
+    state: enabled
+    policy: allow  # Ou "deny" si nécessaire
+
+- name: Installation des paquets nécessaires pour Rsyslog sur le serveur
+  apt:
+    name:
+      - rsyslog
+      - rsyslog-gnutls
+      - ufw
+    state: present
+    update_cache: yes
+
+- name: Installation de GnuTLS pour les connexions sécurisées
+  apt:
+    name: gnutls-bin
+    state: present
+
+- name: Vérification de l'installation de rsyslog-gnutls
+  command: rsyslogd -v
+  register: rsyslog_version
+  changed_when: false
+
+- name: Afficher la version de rsyslog
+  debug:
+    msg: "Version de rsyslog : {{ rsyslog_version.stdout }}"
+
+- name: Installation des dépendances SSL (OpenSSL)
+  apt:
+    name:
+      - openssl
+      - ca-certificates
+    state: present
+
+- name: Vérification de l'installation d'OpenSSL
+  command: openssl version
+  register: openssl_version
+  changed_when: false
+
+- name: Afficher la version d'OpenSSL
+  debug:
+    msg: "Version d'OpenSSL : {{ openssl_version.stdout }}"
+
+- name: Générer la clé privée pour le serveur SSL
+  openssl_privatekey:
+    path: "{{ ssl_cert_path }}/server.key"
+    size: 4096
+  when: ssl_cert_path is defined
+
+- name: Générer une demande de signature de certificat (CSR)
+  openssl_csr:
+    path: "{{ ssl_cert_path }}/server.csr"
+    privatekey_path: "{{ ssl_cert_path }}/server.key"
+    country_name: "{{ ssl_country }}"
+    state_or_province_name: "{{ ssl_state }}"
+    locality_name: "{{ ssl_locality }}"
+    organization_name: "{{ ssl_organization }}"
+    organizational_unit_name: "{{ ssl_organizational_unit }}"
+    common_name: "{{ ssl_common_name }}"
+    email_address: "{{ ssl_email }}"
+  when: ssl_cert_path is defined
+
+- name: Auto-signature du certificat
+  openssl_certificate:
+    path: "{{ ssl_cert_path }}/server.crt"
+    privatekey_path: "{{ ssl_cert_path }}/server.key"
+    csr_path: "{{ ssl_cert_path }}/server.csr"
+    provider: selfsigned
+  when: ssl_cert_path is defined
+
+- name: Créer un répertoire pour les logs
+  file:
+    path: /var/log/clients
+    state: directory
+    mode: '0750'
+    owner: user
+    group: adm
+
+- name: Configurer RSyslog
+  template:
+    src: rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+    mode: '0644'
+
+- name: Redémarrer RSyslog
+  service:
+    name: rsyslog
+    state: restarted

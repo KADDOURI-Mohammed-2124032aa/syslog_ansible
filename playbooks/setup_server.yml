@@ -1,0 +1,10 @@
+---
+- name: Configurer le serveur RSyslog sécurisé
+  hosts: rsyslog_server
+  become: yes
+  vars_files:
+    - ../group_vars/all.yml
+
+  roles:
+    - rsyslog_server
+   

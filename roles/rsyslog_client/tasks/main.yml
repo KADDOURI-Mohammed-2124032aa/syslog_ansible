@@ -1,0 +1,72 @@
+---
+- name: Installation de UFW (si pas déjà installé)
+  apt:
+    name: ufw
+    state: present
+
+- name: Autoriser le trafic entrant pour Rsyslog sur le port 6514 (TCP)
+  ufw:
+    rule: allow
+    port: 6514
+    proto: tcp
+
+- name: Autoriser SSH (port 22)
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+
+- name: Activation du pare-feu UFW
+  ufw:
+    state: enabled
+    policy: allow  # Ou "deny" si nécessaire
+
+- name: Installation des paquets nécessaires pour Rsyslog sur le client
+  apt:
+    name:
+      - rsyslog
+      - rsyslog-gnutls
+      - ufw
+    state: present
+    update_cache: yes
+
+- name: Installation de GnuTLS pour les connexions sécurisées
+  apt:
+    name: gnutls-bin
+    state: present
+
+- name: Vérification de l'installation de rsyslog-gnutls
+  command: rsyslogd -v
+  register: rsyslog_version
+  changed_when: false
+
+- name: Afficher la version de rsyslog
+  debug:
+    msg: "Version de rsyslog : {{ rsyslog_version.stdout }}"
+
+- name: Créer le répertoire pour les certificats SSL de RSyslog
+  file:
+    path: /etc/ssl/rsyslog
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copier le certificat CA sur le client
+  copy:
+    src: "{{ ssl_cert_path }}/server.crt"
+    dest: /etc/ssl/rsyslog/server.crt
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configurer RSyslog pour envoyer les logs au serveur central
+  template:
+    src: rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+    mode: '0644'
+
+- name: Redémarrer le service RSyslog
+  service:
+    name: rsyslog
+    state: restarted
