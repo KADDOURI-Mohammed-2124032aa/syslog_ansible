@@ -1,0 +1,10 @@
+---
+- name: Configurer les clients RSyslog
+  hosts: client1 client2
+  become: yes
+  vars_files:
+    - ../group_vars/all.yml
+
+
+  roles:
+    - rsyslog_client

@@ -1,0 +1,21 @@
+# Paramètres du serveur RSyslog
+rsyslog_server_ip: "192.168.198.134"
+rsyslog_server_port: 6514
+rsyslog_udp_port: 514
+
+# Paramètres SSL/TLS pour sécuriser la communication
+ssl_country: "FR"
+ssl_state: "IDF"
+ssl_locality: "Paris"
+ssl_organization: "MonEntreprise"
+ssl_organizational_unit: "IT"
+ssl_common_name: "{{ ansible_fqdn }}"
+ssl_email: "admin@monentreprise.fr"
+ssl_days_valid: 365
+ssl_cert_path: "/etc/ssl/rsyslog"  # Chemin du certificat
+
+# Paramètres de sécurité
+firewall_allowed_tcp_ports:
+  - "{{ rsyslog_server_port }}"
+  - 22
+
