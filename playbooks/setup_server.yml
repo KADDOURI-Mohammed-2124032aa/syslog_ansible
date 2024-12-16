@@ -6,5 +6,7 @@
     - ../group_vars/all.yml
 
   roles:
+    - common
     - rsyslog_server
+    - handlers
    

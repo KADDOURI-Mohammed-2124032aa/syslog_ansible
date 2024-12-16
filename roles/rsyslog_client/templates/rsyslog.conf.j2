@@ -2,6 +2,12 @@
 module(load="imuxsock") # Pour les logs système locaux
 module(load="imklog")   # Pour les logs kernel
 
+global(
+    DefaultNetstreamDriver="gtls"
+   DefaultNetstreamDriverCAFile="{{ ssl_cert_path }}/server.crt"
+)
+
+
 # Envoi de tous les logs vers le serveur distant
 *.* action(
     type="omfwd"

@@ -1,6 +1,14 @@
 # Configuration RSyslog pour le serveur
 module(load="imtcp")
 
+# Configuration SSL pour sécuriser les connexions
+global(
+    DefaultNetstreamDriver="gtls"
+   DefaultNetstreamDriverCAFile="{{ ssl_cert_path }}/server.crt"
+    DefaultNetstreamDriverCertFile="{{ ssl_cert_path }}/server.crt"
+    DefaultNetstreamDriverKeyFile="{{ ssl_cert_path }}/server.key"
+)
+
 
 # Configuration de l'écoute
 input(type="imtcp" port="{{ rsyslog_server_port }}")

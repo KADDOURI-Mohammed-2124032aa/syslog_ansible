@@ -1,0 +1,5 @@
+---
+- name: Redémarrer le service RSyslog
+  service:
+    name: rsyslog
+    state: restarted
